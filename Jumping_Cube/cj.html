@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column; /* Изменение на колоночный флекс для размещения кнопки */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameArea {
+            width: 90vw; /* 90% от ширины окна для адаптации */
+            height: 60vh; /* 60% от высоты окна для адаптации */
+            max-width: 400px; /* Ограничение ширины для компьютеров */
+            max-height: 600px; /* Ограничение высоты для больших экранов */
+            position: relative;
+            overflow: hidden;
+            background-color: #282c34;
+            border: 2px solid white;
+        }
+
+        #bird {
+            width: 6vw; /* Пропорциональная ширина */
+            height: 6vw; /* Пропорциональная высота */
+            max-width: 30px;
+            max-height: 30px;
+            background-color: #ff6f61;
+            border-radius: 10px;
+            position: absolute;
+            top: 25%; /* Начальная позиция по вертикали */
+            left: 10%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .pipe {
+            position: absolute;
+            width: 10vw; /* Пропорциональная ширина */
+            max-width: 50px;
+            background-color: green;
+        }
+
+        #score, #highScore {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            color: white;
+            font-size: 4vw; /* Пропорциональный размер текста */
+            max-font-size: 18px;
+        }
+
+        #highScore {
+            right: 5px;
+            left: auto;
+        }
+
+        /* Стили для кнопки "Назад" */
+        #backButton {
+            margin-top: 20px; /* Отступ сверху */
+            padding: 10px 20px; /* Отступ внутри кнопки */
+            font-size: 4vw; /* Пропорциональный размер текста */
+            background-color: #ff6f61; /* Цвет кнопки */
+            color: white; /* Цвет текста */
+            border: none; /* Убираем рамку */
+            border-radius: 5px; /* Закругленные углы */
+            cursor: pointer; /* Указатель при наведении */
+        }
+
+        #backButton:hover {
+            background-color: #d9574a; /* Цвет кнопки при наведении */
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px; /* Подняли кнопку вверх */
+            left: 50%; /* Центрируем кнопку по горизонтали */
+            transform: translateX(-50%); /* Центрируем кнопку по горизонтали */
+            padding: 10px 20px;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-link:hover {
+            background-color: #d9574a;
+        }
+
+        /* Дополнительные стили для небольших экранов */
+        @media (max-width: 400px) {
+            #score, #highScore {
+                font-size: 3.5vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Счет: 0</div>
+    <div id="highScore">Рекорд: 0</div>
+    <div id="gameArea">
+        <div id="bird"></div>
+    </div>
+    <button id="backButton" class="btn" onclick="window.history.back()">назад</button>
+    <script>
+        const gameArea = document.getElementById("gameArea");
+        const bird = document.getElementById("bird");
+        const scoreDisplay = document.getElementById("score");
+        const highScoreDisplay = document.getElementById("highScore");
+        let birdY = 150; // Начальная позиция птицы
+        let gravity = 2;
+        let isGameOver = false;
+        let pipeInterval;
+        let score = 0;
+        let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+
+        highScoreDisplay.textContent = `Рекорд: ${highScore}`;
+
+        // Управление при нажатии на экран
+        document.addEventListener("touchstart", () => {
+            if (!isGameOver) {
+                birdY -= 40; // Подъем птицы
+                bird.style.top = birdY + "px";
+            }
+        });
+
+        // Управление на компьютере (пробел для подъема)
+        document.addEventListener("keydown", (event) => {
+            if (event.code === "Space" && !isGameOver) {
+                birdY -= 40; // Подъем птицы
+                bird.style.top = birdY + "px";
+            }
+        });
+
+        function startGame() {
+            pipeInterval = setInterval(createPipe, 2000);
+            const gameLoop = setInterval(() => {
+                if (!isGameOver) {
+                    birdY += gravity; // Гравитация
+                    bird.style.top = birdY + "px";
+
+                    // Проверка выхода за границы игрового поля
+                    if (birdY + bird.clientHeight >= gameArea.clientHeight || birdY <= 0) {
+                        gameOver();
+                    }
+                }
+            }, 20);
+        }
+
+        function createPipe() {
+            const pipeHeight = Math.random() * (300 - 100) + 100; // Высота трубы
+            const pipe = document.createElement("div");
+            pipe.className = "pipe";
+            pipe.style.height = pipeHeight + "px";
+            pipe.style.left = "400px";
+            pipe.style.top = "0"; // Верхняя труба начинается сверху
+            gameArea.appendChild(pipe);
+
+            const pipeBottom = document.createElement("div");
+            pipeBottom.className = "pipe";
+            pipeBottom.style.height = (gameArea.clientHeight - pipeHeight - 150) + "px"; // Нижняя труба
+            pipeBottom.style.left = "400px";
+            pipeBottom.style.bottom = "0";
+            gameArea.appendChild(pipeBottom);
+
+            const movePipe = setInterval(() => {
+                if (!isGameOver) {
+                    const pipeLeft = parseInt(pipe.style.left);
+                    if (pipeLeft < -60) {
+                        clearInterval(movePipe);
+                        gameArea.removeChild(pipe);
+                        gameArea.removeChild(pipeBottom);
+                    } else {
+                        pipe.style.left = pipeLeft - 2 + "px";
+                        pipeBottom.style.left = pipeLeft - 2 + "px";
+                        checkCollision(pipe, pipeBottom);
+                        updateScore(pipeLeft);
+                    }
+                } else {
+                    clearInterval(movePipe);
+                }
+            }, 20);
+        }
+
+        function checkCollision(pipe, pipeBottom) {
+            const pipeRect = pipe.getBoundingClientRect();
+            const birdRect = bird.getBoundingClientRect();
+            const pipeBottomRect = pipeBottom.getBoundingClientRect();
+
+            // Мягкая проверка коллизий, с небольшим отступом
+            if (
+                birdRect.right > pipeRect.left + 5 && 
+                birdRect.left < pipeRect.right - 5 && 
+                (birdRect.top < pipeRect.bottom - 5 || birdRect.bottom > pipeBottomRect.top + 5)
+            ) {
+                gameOver();
+            }
+        }
+
+        function updateScore(pipeLeft) {
+            // Увеличение счета, когда птица проходит мимо трубы
+            if (pipeLeft === 50) {
+                score++;
+                scoreDisplay.textContent = `Счет: ${score}`;
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(pipeInterval);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                highScoreDisplay.textContent = `Рекорд: ${highScore}`;
+            }
+            alert(`Игра окончена! Ваш счёт: ${score}`);
+            document.location.reload();
+        }
+
+        function goBack() {
+            window.location.href = '/index.html';
+        }
+
+        startGame();
+    </script>
+</body>
+</html>

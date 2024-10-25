@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Blocks</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+        }
+
+        #gameArea {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background-color: #282c34;
+        }
+
+        .block {
+            width: 50px;
+            height: 50px;
+            position: absolute;
+            background-color: #ff6f61;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #catcher {
+            width: 80px;
+            height: 20px;
+            position: absolute;
+            bottom: 10px;
+            left: calc(50% - 40px);
+            background-color: #00aced;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #score, #lives, #record {
+            position: absolute;
+            color: white;
+            font-size: 24px;
+        }
+
+        #score {
+            top: 10px;
+            left: 10px;
+        }
+
+        #lives {
+            top: 10px;
+            right: 10px;
+        }
+
+        #record {
+            top: 50px;
+            right: 10px;
+        }
+
+        .red-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        /* Дизайн кнопки Назад */
+        #backButton {
+            position: absolute;
+            top: 20px; /* Подняли кнопку вверх */
+            left: 50%; /* Центрируем кнопку по горизонтали */
+            transform: translateX(-50%); /* Центрируем кнопку по горизонтали */
+            padding: 10px 20px;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #backButton:hover {
+            background-color: #d9574a;
+        }
+
+
+        /* Адаптивные стили */
+        @media (max-width: 600px) {
+            #catcher {
+                width: 60px;
+                height: 15px;
+            }
+
+            #score, #lives, #record, #backButton {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #catcher {
+                width: 50px;
+                height: 12px;
+            }
+
+            #score, #lives, #record, #backButton {
+                font-size: 16px;
+            }
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px; /* Подняли кнопку вверх */
+            left: 50%; /* Центрируем кнопку по горизонтали */
+            transform: translateX(-50%); /* Центрируем кнопку по горизонтали */
+            padding: 10px 20px;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-link:hover {
+            background-color: #d9574a;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameArea">
+        <button id="backButton" class="btn" onclick="window.history.back()">назад</button>
+        <div id="catcher"></div>
+        <div id="score">Score: 0</div>
+        <div id="lives">Lives: 5</div>
+        <div id="record">High Score: 0</div>
+        <div class="red-screen" id="redScreen"></div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('gameArea');
+        const catcher = document.getElementById('catcher');
+        const scoreDisplay = document.getElementById('score');
+        const livesDisplay = document.getElementById('lives');
+        const recordDisplay = document.getElementById('record');
+        const redScreen = document.getElementById('redScreen');
+
+        let score = 0;
+        let lives = 5;
+        let record = localStorage.getItem('record') ? parseInt(localStorage.getItem('record')) : 0;
+        recordDisplay.textContent = `Record: ${record}`;
+
+        // Функция перехода назад
+        function goBack() {
+            window.location.href = '/index.html';
+        }
+
+
+        // Обновление позиции ловца с помощью мыши или касания
+        gameArea.addEventListener('mousemove', (e) => {
+            let catcherX = e.clientX - catcher.offsetWidth / 2;
+            catcher.style.left = `${catcherX}px`;
+        });
+
+        gameArea.addEventListener('touchmove', (e) => {
+            let touch = e.touches[0];
+            let catcherX = touch.clientX - catcher.offsetWidth / 2;
+            catcher.style.left = `${catcherX}px`;
+            e.preventDefault();
+        });
+
+        // Создание падающего блока
+        function createBlock() {
+            const block = document.createElement('div');
+            block.classList.add('block');
+            block.style.left = `${Math.random() * (gameArea.offsetWidth - 50)}px`;
+            block.style.top = '-50px';
+            gameArea.appendChild(block);
+            moveBlock(block);
+        }
+
+        // Движение блока вниз
+        function moveBlock(block) {
+            let blockInterval = setInterval(() => {
+                let blockTop = parseInt(block.style.top);
+                block.style.top = `${blockTop + 5}px`;
+
+                let blockRect = block.getBoundingClientRect();
+                let catcherRect = catcher.getBoundingClientRect();
+
+                if (blockRect.top + blockRect.height >= catcherRect.top &&
+                    blockRect.left < catcherRect.right &&
+                    blockRect.right > catcherRect.left) {
+                    score++;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    gameArea.removeChild(block);
+                    clearInterval(blockInterval);
+                }
+
+                if (blockTop > gameArea.offsetHeight) {
+                    gameArea.removeChild(block);
+                    clearInterval(blockInterval);
+                    lives--;
+                    livesDisplay.textContent = `Lives: ${lives}`;
+                    score--;
+                    scoreDisplay.textContent = `Score: ${score}`;
+
+                    showRedScreen();
+
+                    if (lives <= 0) {
+                        endGame();
+                    }
+
+                    if (score > record) {
+                        record = score;
+                        localStorage.setItem('record', record);
+                        recordDisplay.textContent = `Record: ${record}`;
+                    }
+                }
+            }, 20);
+        }
+
+        function endGame() {
+            alert(`Game Over! Your score: ${score}`);
+            lives = 5;
+            score = 0;
+            livesDisplay.textContent = `Lives: ${lives}`;
+            scoreDisplay.textContent = `Score: ${score}`;
+            const blocks = document.querySelectorAll('.block');
+            blocks.forEach(block => gameArea.removeChild(block));
+        }
+
+        function showRedScreen() {
+            redScreen.style.opacity = 1;
+            setTimeout(() => {
+                redScreen.style.opacity = 0;
+            }, 500);
+        }
+
+        setInterval(createBlock, 1000);
+    </script>
+</body>
+</html>

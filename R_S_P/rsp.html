@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Камень, ножницы, бумага</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #282c34;
+            color: #fff;
+            text-align: center;
+        }
+
+        #backButton {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+
+        #gameBoard {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .side {
+            width: 45%;
+        }
+
+        #result {
+            font-size: 1.5em;
+            margin-top: 10px;
+        }
+
+        .buttons, .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: white;
+            background-color: #ff6f61;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #d9574a;
+        }
+
+        #resetButton {
+            margin-top: 50px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px; /* Подняли кнопку вверх */
+            left: 50%; /* Центрируем кнопку по горизонтали */
+            transform: translateX(-50%); /* Центрируем кнопку по горизонтали */
+            padding: 10px 20px;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-link:hover {
+            background-color: #d9574a;
+        }
+    </style>
+</head>
+<body>
+    <button id="backButton" class="btn" onclick="window.history.back()">назад</button>
+    
+    <h1>Игра "Камень, ножницы, бумага"</h1>
+    
+    <div id="gameBoard">
+        <div class="side" id="userChoice">Вы: выбрали...</div>
+        <div class="side" id="computerChoice">Бот: выбрал...</div>
+    </div>
+
+    <div id="result">Сделайте выбор, чтобы начать игру!</div>
+
+    <div class="buttons">
+        <button class="btn" onclick="playGame('Камень')">Камень</button>
+        <button class="btn" onclick="playGame('Ножницы')">Ножницы</button>
+        <button class="btn" onclick="playGame('Бумага')">Бумага</button>
+    </div>
+
+    <button id="resetButton" class="btn" onclick="resetGame()">Играть снова</button>
+
+    <script>
+        function playGame(userChoice) {
+            const choices = ["Камень", "Ножницы", "Бумага"];
+            const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+
+            document.getElementById("userChoice").textContent = `Вы: выбрали ${userChoice}`;
+            document.getElementById("computerChoice").textContent = `Бот: выбрал ${computerChoice}`;
+
+            let result = determineWinner(userChoice, computerChoice);
+            document.getElementById("result").textContent = result;
+        }
+
+        function determineWinner(user, computer) {
+            if (user === computer) {
+                return "Ничья!";
+            } else if (
+                (user === "Камень" && computer === "Ножницы") ||
+                (user === "Ножницы" && computer === "Бумага") ||
+                (user === "Бумага" && computer === "Камень")
+            ) {
+                return "Вы выиграли!";
+            } else {
+                return "Бот выиграл!";
+            }
+        }
+
+        function resetGame() {
+            document.getElementById("userChoice").textContent = "Вы: выбрали...";
+            document.getElementById("computerChoice").textContent = "Компьютер: выбрал...";
+            document.getElementById("result").textContent = "Сделайте выбор, чтобы начать игру!";
+        }
+
+        function goBack() {
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>
